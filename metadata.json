@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Calculadora de Concentración de Proteínas",
+  "description": "Una aplicación web para calcular concentraciones de proteínas a partir de lecturas de densidad óptica utilizando una curva estándar. Realiza regresión lineal, grafica la curva de calibración y calcula las concentraciones de las muestras, incluyendo el manejo de diluciones y la validación de datos.",
+  "requestFramePermissions": []
+}
