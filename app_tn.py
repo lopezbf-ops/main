@@ -2,7 +2,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
-import math
 import io
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -33,10 +32,9 @@ with col3:
 st.divider()
 
 # --- CÁLCULOS MATEMÁTICOS ---
-raw_w = margin_x + insert_w + spine_w + insert_w + margin_x
-raw_h = margin_y + insert_h + margin_y
-total_w = math.ceil(raw_w)
-total_h = math.ceil(raw_h)
+# Cálculo exacto conservando 1 decimal (sin redondeo agresivo)
+total_w = round(margin_x + insert_w + spine_w + insert_w + margin_x, 1)
+total_h = round(margin_y + insert_h + margin_y, 1)
 
 st.success(f"**PIEZA PRINCIPAL:** Cortar cuero a {total_w} cm de ancho x {total_h} cm de alto")
 if incluir_solapa:
@@ -102,7 +100,6 @@ def generar_excel():
     b_style = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
     c_align, l_align = Alignment(horizontal='center', vertical='center'), Alignment(horizontal='left', vertical='center')
 
-    # Título y Encabezados
     ws.merge_cells('B2:E2')
     ws['B2'].value, ws['B2'].font, ws['B2'].alignment = "CALCULADORA DE MEDIDAS - TRAVELER'S NOTEBOOK (TONAL)", Font(size=14, bold=True, color="1F497D"), c_align
     
@@ -111,7 +108,6 @@ def generar_excel():
         cell = ws.cell(row=4, column=col_num, value=header)
         cell.fill, cell.font, cell.alignment, cell.border = dark_blue_fill, white_font, c_align, b_style
 
-    # Datos de entrada dinámicos
     data = [
         ("Ancho del Inserto", insert_w, "Ancho del cuadernillo cerrado"),
         ("Alto del Inserto", insert_h, "Alto del cuadernillo cerrado"),
@@ -127,15 +123,14 @@ def generar_excel():
             cell.border, cell.alignment = b_style, (c_align if col_num == 3 else l_align)
             if row_num % 2 == 0: cell.fill = light_blue_fill
 
-    # Cálculo Final
     ws.merge_cells('B12:E12')
     ws['B12'].value, ws['B12'].font, ws['B12'].fill, ws['B12'].alignment = "CÁLCULO DE CORTE FINAL", Font(size=12, bold=True, color="FFFFFF"), dark_blue_fill, c_align
 
     formulas = [
         ("Ancho Bruto", "=C5+C5+C7+C8+C8", "Inserto + Inserto + Lomo + Margen(x2)"),
         ("Alto Bruto", "=C6+C9+C9", "Inserto + Margen Sup/Inf(x2)"),
-        ("ANCHO DE CORTE (Redondeado)", "=ROUNDUP(C13,0)", "Redondeo al entero superior"),
-        ("ALTO DE CORTE (Redondeado)", "=ROUNDUP(C14,0)", "Redondeo al entero superior"),
+        ("ANCHO DE CORTE FINAL", "=C13", "Medida exacta al decimal"),
+        ("ALTO DE CORTE FINAL", "=C14", "Medida exacta al decimal"),
         ("SOLAPA INTERIOR (Ancho x Alto)", '=C10 & " x " & C16', "Ancho de solapa x Alto de corte")
     ]
 
@@ -159,7 +154,6 @@ st.markdown("**Vista Previa del Patrón**")
 fig_visual = generar_grafico(escala_pdf=False)
 st.pyplot(fig_visual)
 
-# Buffers
 fig_pdf = generar_grafico(escala_pdf=True)
 pdf_buffer = io.BytesIO()
 fig_pdf.savefig(pdf_buffer, format='pdf', bbox_inches='tight', pad_inches=0)
@@ -167,7 +161,6 @@ pdf_buffer.seek(0)
 
 excel_buffer = generar_excel()
 
-# Botones lado a lado
 btn_col1, btn_col2 = st.columns(2)
 with btn_col1:
     st.download_button(
