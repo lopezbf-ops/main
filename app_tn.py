@@ -32,7 +32,6 @@ with col3:
 st.divider()
 
 # --- CÁLCULOS MATEMÁTICOS ---
-# Cálculo exacto conservando 1 decimal (sin redondeo agresivo)
 total_w = round(margin_x + insert_w + spine_w + insert_w + margin_x, 1)
 total_h = round(margin_y + insert_h + margin_y, 1)
 
@@ -59,29 +58,52 @@ def generar_grafico(escala_pdf=False):
     ax.add_patch(patches.Rectangle((0, 0), total_w, total_h, linewidth=1, edgecolor='black', facecolor='none'))
     center_x, center_y = total_w / 2, total_h / 2
     
-    # Hoyos para elástico
+    # Hoyos para elástico (Diámetro 2 mm = 0.2 cm -> Radio = 0.1 cm)
+    hole_d = 0.2
+    radio_el = hole_d / 2
     y_holes = [center_y, total_h - 1.0, total_h - 1.8, 1.0, 1.8]
     for y in y_holes:
-        ax.add_patch(patches.Circle((center_x, y), 0.125, color='black'))
+        ax.add_patch(patches.Circle((center_x, y), radio_el, color='black'))
 
     # 2. SOLAPA Y COSTURA
     if incluir_solapa:
-        stitch_r, margen_c, sep_c = 0.06, 0.4, 0.4
-        y_costura = np.arange(margen_c, total_h, sep_c)
-        x_costura_horiz = np.arange(margen_c + sep_c, flap_w, sep_c)
+        # Hoyos de costura (Diámetro 1.2 mm = 0.12 cm -> Radio = 0.06 cm)
+        stitch_d = 0.12
+        stitch_r = stitch_d / 2
+        
+        # Margen = 4 mm (0.4 cm), Separación = 6 mm (0.6 cm)
+        margen_c = 0.4
+        sep_c = 0.6
+
+        # Función de trazado inteligente para evitar desfase en las esquinas
+        def get_hole_coords(start, end, step):
+            coords = np.arange(start, end, step)
+            # Forzar siempre un hoyo exacto en la esquina final
+            if len(coords) == 0 or coords[-1] != end:
+                coords = np.append(coords, end)
+            # Eliminar el penúltimo hoyo si queda muy pegado a la esquina
+            if len(coords) >= 2 and (coords[-1] - coords[-2]) < (step * 0.5):
+                coords = np.delete(coords, -2)
+            return coords
+
+        # Trazado de coordenadas
+        y_costura = get_hole_coords(margen_c, total_h - margen_c, sep_c)
+        x_costura_horiz = get_hole_coords(margen_c + sep_c, flap_w - margen_c, sep_c)
 
         # Costura Cuero Principal
-        for y in y_costura: ax.add_patch(patches.Circle((margen_c, y), stitch_r, color='black'))
+        for y in y_costura: 
+            ax.add_patch(patches.Circle((margen_c, y), stitch_r, color='black'))
         for x in x_costura_horiz:
             ax.add_patch(patches.Circle((x, total_h - margen_c), stitch_r, color='black'))
             ax.add_patch(patches.Circle((x, margen_c), stitch_r, color='black'))
 
-        # Solapa
+        # Trazado perimetral de la solapa
         offset_x = total_w + espacio_entre_piezas
         ax.add_patch(patches.Rectangle((offset_x, 0), flap_w, total_h, linewidth=1, edgecolor='black', facecolor='none'))
 
         # Costura Solapa
-        for y in y_costura: ax.add_patch(patches.Circle((offset_x + margen_c, y), stitch_r, color='black'))
+        for y in y_costura: 
+            ax.add_patch(patches.Circle((offset_x + margen_c, y), stitch_r, color='black'))
         for x in x_costura_horiz:
             ax.add_patch(patches.Circle((offset_x + x, total_h - margen_c), stitch_r, color='black'))
             ax.add_patch(patches.Circle((offset_x + x, margen_c), stitch_r, color='black'))
