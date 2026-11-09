@@ -58,44 +58,39 @@ def generar_grafico(escala_pdf=False):
     ax.add_patch(patches.Rectangle((0, 0), total_w, total_h, linewidth=1, edgecolor='black', facecolor='none'))
     center_x, center_y = total_w / 2, total_h / 2
     
-    # Hoyos para elástico (Diámetro 2 mm = 0.2 cm -> Radio = 0.1 cm)
-    hole_d = 0.2
-    radio_el = hole_d / 2
+    # Hoyos para elástico (Diámetro exacto 2 mm = 0.2 cm -> Radio = 0.1 cm)
+    radio_el = 0.1
     y_holes = [center_y, total_h - 1.0, total_h - 1.8, 1.0, 1.8]
     for y in y_holes:
-        ax.add_patch(patches.Circle((center_x, y), radio_el, color='black'))
+        # Se añade linewidth=0 para evitar que el trazo agrande el diámetro
+        ax.add_patch(patches.Circle((center_x, y), radio_el, facecolor='black', edgecolor='none', linewidth=0))
 
     # 2. SOLAPA Y COSTURA
     if incluir_solapa:
-        # Hoyos de costura (Diámetro 1.2 mm = 0.12 cm -> Radio = 0.06 cm)
-        stitch_d = 0.12
-        stitch_r = stitch_d / 2
-        
-        # Margen = 4 mm (0.4 cm), Separación = 6 mm (0.6 cm)
+        # Hoyos de costura (Diámetro exacto 1.2 mm = 0.12 cm -> Radio = 0.06 cm)
+        stitch_r = 0.06
         margen_c = 0.4
         sep_c = 0.6
 
-        # Función de trazado inteligente para evitar desfase en las esquinas
-        def get_hole_coords(start, end, step):
-            coords = np.arange(start, end, step)
-            # Forzar siempre un hoyo exacto en la esquina final
-            if len(coords) == 0 or coords[-1] != end:
-                coords = np.append(coords, end)
-            # Eliminar el penúltimo hoyo si queda muy pegado a la esquina
-            if len(coords) >= 2 and (coords[-1] - coords[-2]) < (step * 0.5):
-                coords = np.delete(coords, -2)
-            return coords
+        # Función matemática tipo CAD para distribuir hoyos uniformemente y evitar saltos
+        def get_evenly_spaced_coords(start, end, target_step):
+            L = end - start
+            if L <= 0: return []
+            num_steps = max(1, int(round(L / target_step)))
+            return np.linspace(start, end, num_steps + 1)
 
-        # Trazado de coordenadas
-        y_costura = get_hole_coords(margen_c, total_h - margen_c, sep_c)
-        x_costura_horiz = get_hole_coords(margen_c + sep_c, flap_w - margen_c, sep_c)
+        y_costura = get_evenly_spaced_coords(margen_c, total_h - margen_c, sep_c)
+        x_coords_full = get_evenly_spaced_coords(margen_c, flap_w - margen_c, sep_c)
+        
+        # Omitimos el primer punto en la línea horizontal para no duplicar el hoyo de la esquina
+        x_costura_horiz = x_coords_full[1:] if len(x_coords_full) > 1 else []
 
         # Costura Cuero Principal
         for y in y_costura: 
-            ax.add_patch(patches.Circle((margen_c, y), stitch_r, color='black'))
+            ax.add_patch(patches.Circle((margen_c, y), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
         for x in x_costura_horiz:
-            ax.add_patch(patches.Circle((x, total_h - margen_c), stitch_r, color='black'))
-            ax.add_patch(patches.Circle((x, margen_c), stitch_r, color='black'))
+            ax.add_patch(patches.Circle((x, total_h - margen_c), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
+            ax.add_patch(patches.Circle((x, margen_c), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
 
         # Trazado perimetral de la solapa
         offset_x = total_w + espacio_entre_piezas
@@ -103,10 +98,10 @@ def generar_grafico(escala_pdf=False):
 
         # Costura Solapa
         for y in y_costura: 
-            ax.add_patch(patches.Circle((offset_x + margen_c, y), stitch_r, color='black'))
+            ax.add_patch(patches.Circle((offset_x + margen_c, y), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
         for x in x_costura_horiz:
-            ax.add_patch(patches.Circle((offset_x + x, total_h - margen_c), stitch_r, color='black'))
-            ax.add_patch(patches.Circle((offset_x + x, margen_c), stitch_r, color='black'))
+            ax.add_patch(patches.Circle((offset_x + x, total_h - margen_c), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
+            ax.add_patch(patches.Circle((offset_x + x, margen_c), stitch_r, facecolor='black', edgecolor='none', linewidth=0))
 
     return fig
 
