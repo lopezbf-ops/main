@@ -149,6 +149,7 @@ elif modelo_tn == "Modelo Trifold (Triple doblez)":
         # Columnas de lomo (Separadas por 8mm = 0.8cm)
         spine_1_x = dist_lomo
         spine_2_x = dist_lomo + 0.8
+        spine_3_x = dist_lomo + 1.6  # Tercera columna agregada a la derecha
         
         # Coordenadas Y para los lomos (A 8mm y 16mm de los bordes superior e inferior)
         y_holes = [total_h - 0.8, total_h - 1.6, 0.8, 1.6]
@@ -156,10 +157,12 @@ elif modelo_tn == "Modelo Trifold (Triple doblez)":
         for y in y_holes:
             ax.add_patch(patches.Circle((spine_1_x, y), radio_el, facecolor='black', edgecolor='none', linewidth=0))
             ax.add_patch(patches.Circle((spine_2_x, y), radio_el, facecolor='black', edgecolor='none', linewidth=0))
+            ax.add_patch(patches.Circle((spine_3_x, y), radio_el, facecolor='black', edgecolor='none', linewidth=0))
 
-        # Hoyos centrales para elástico de cierre (Separados por 16mm = 1.6cm)
+        # Hoyos centrales para elástico de cierre
+        # El primero alineado a la primera columna, el segundo alineado a la tercera columna (separación total 16mm)
         ax.add_patch(patches.Circle((spine_1_x, total_h / 2), radio_el, facecolor='black', edgecolor='none', linewidth=0))
-        ax.add_patch(patches.Circle((spine_1_x + 1.6, total_h / 2), radio_el, facecolor='black', edgecolor='none', linewidth=0))
+        ax.add_patch(patches.Circle((spine_3_x, total_h / 2), radio_el, facecolor='black', edgecolor='none', linewidth=0))
 
         # --- SOLAPA Y COSTURA ---
         if incluir_solapa:
