@@ -4,3 +4,6 @@ numpy
 openpyxl
 fpdf
 matplotlib
+qrcode[pil]
+pillow
+fpdf2
